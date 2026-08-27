@@ -140,10 +140,79 @@
     opacity: .5;
     letter-spacing: .12em;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  /* ---- mini-IDS das laterais ---- */
+
+  .lane {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 132px;
+    z-index: 2;
+    pointer-events: none;   /* so os pacotes capturam clique */
+    overflow: hidden;
+  }
+  .lane.left  { left: 0; }
+  .lane.right { right: 0; }
+
+  .packet {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    pointer-events: auto;
+    cursor: crosshair;
+    padding: .3rem .5rem;
+    border: 1px solid var(--line);
+    background: rgba(0,0,0,.55);
+    color: var(--dim);
+    font-size: .58rem;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    opacity: .5;
+    transition: opacity .2s ease, border-color .2s ease, color .2s ease;
+    will-change: transform;
+  }
+  .packet:hover {
+    opacity: 1;
+    border-color: var(--fg);
+    color: var(--fg);
+  }
+
+  /* dois desfechos possiveis, cada um com sua marca */
+  .packet.hit  { animation: hit  .32s ease-out forwards; }
+  .packet.miss { animation: miss .32s ease-out forwards; }
+
+  @keyframes hit {
+    0%   { opacity: 1; border-color: #fff; color: #fff; background: #fff; }
+    100% { opacity: 0; transform: translate(-50%, var(--y)) scale(1.35); }
+  }
+  @keyframes miss {
+    0%   { opacity: 1; border-color: #fff; color: #fff; }
+    100% { opacity: 0; transform: translate(-50%, var(--y)) scale(.7); }
+  }
+
+  .hud {
+    font-size: .58rem;
+    letter-spacing: .12em;
+    color: var(--dim);
+  }
+  .hud b { color: var(--fg); font-weight: 400; }
+  .hud .sep { opacity: .35; margin: 0 .45rem; }
+
+  /* laterais so em tela larga: no celular nao sobra margem */
+  @media (max-width: 900px) {
+    .lane { display: none; }
+    .hud  { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     a.link, a.link .arrow { transition: none; }
+    .lane { display: none; }
+    .hud  { display: none; }
   }
 </style>
 </head>
@@ -151,6 +220,9 @@
 
 <div id="scene"></div>
 <div class="vignette"></div>
+
+<div class="lane left"  id="lane-l"></div>
+<div class="lane right" id="lane-r"></div>
 
 <main>
   <header>
@@ -185,7 +257,12 @@
     </a>
   </nav>
 
-  <footer>Fortaleza &middot; Brasil</footer>
+  <footer>
+    <div class="hud" id="hud">
+      IDS &mdash; clique nos payloads maliciosos que descem nas laterais
+    </div>
+    <div>Fortaleza &middot; Brasil</div>
+  </footer>
 </main>
 
 <script type="importmap">
@@ -306,6 +383,92 @@ function frame() {
   renderer.render(scene, camera);
 }
 frame();
+</script>
+
+<script>
+/* mini-IDS: trafego desce pelas laterais, voce inspeciona e bloqueia o que e ataque.
+   errar num pacote legitimo conta falso positivo, deixar ataque passar conta breach. */
+(function () {
+  const lanes = [document.getElementById('lane-l'), document.getElementById('lane-r')];
+  const hud = document.getElementById('hud');
+  if (!lanes[0] || !hud) return;
+  if (matchMedia('(max-width: 900px)').matches) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const CLEAN = ['GET /index', '200 OK', 'SYN ACK', 'TLS 1.3', 'DNS A?', 'POST /api',
+                 'ICMP echo', '304 CACHED', 'HEAD /', 'ssh keepalive'];
+
+  const ATTACK = ["' OR 1=1--", '../../etc/passwd', '<script>alert', '; rm -rf /',
+                  'UNION SELECT', '${jndi:ldap://', '|| curl evil.sh', '%00%2e%2e%2f',
+                  'admin:admin', 'nc -e /bin/sh'];
+
+  const live = [];
+  let blocked = 0, missed = 0, falsePos = 0, started = false;
+
+  function draw() {
+    if (!started) return;
+    hud.innerHTML =
+      '<b>' + blocked + '</b> bloqueados' +
+      '<span class="sep">|</span><b>' + missed + '</b> vazaram' +
+      '<span class="sep">|</span><b>' + falsePos + '</b> falso-positivo';
+  }
+
+  function spawn() {
+    const lane = lanes[(Math.random() * 2) | 0];
+    const evil = Math.random() < 0.42;
+    const pool = evil ? ATTACK : CLEAN;
+
+    const el = document.createElement('div');
+    el.className = 'packet';
+    el.textContent = pool[(Math.random() * pool.length) | 0];
+    el.style.transform = 'translate(-50%, -40px)';
+    lane.appendChild(el);
+
+    const p = { el, evil, y: -40, speed: 26 + Math.random() * 14, done: false };
+    live.push(p);
+
+    el.addEventListener('click', function () {
+      if (p.done) return;
+      p.done = true;
+      started = true;
+      el.style.setProperty('--y', p.y + 'px');
+      if (p.evil) { blocked++; el.classList.add('hit'); }
+      else        { falsePos++; el.classList.add('miss'); }
+      draw();
+      setTimeout(function () { el.remove(); }, 340);
+    });
+  }
+
+  let last = performance.now(), acc = 0;
+
+  function tick(now) {
+    requestAnimationFrame(tick);
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+
+    acc += dt;
+    if (acc > 1.5) { acc = 0; if (live.length < 14) spawn(); }
+
+    const limit = innerHeight + 40;
+    for (let i = live.length - 1; i >= 0; i--) {
+      const p = live[i];
+      if (p.done) {
+        if (!p.el.isConnected) live.splice(i, 1);
+        continue;
+      }
+      p.y += p.speed * dt;
+      p.el.style.transform = 'translate(-50%, ' + p.y + 'px)';
+
+      if (p.y > limit) {                 // chegou no fim da lane
+        if (p.evil && started) missed++; // ataque que passou so conta depois do 1o clique
+        p.el.remove();
+        live.splice(i, 1);
+        draw();
+      }
+    }
+  }
+  requestAnimationFrame(tick);
+})();
 </script>
 
 </body>
