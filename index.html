@@ -347,21 +347,25 @@ frame();
     ctx.scale(dpr, dpr);
     ctx.font = FONT + "px 'JetBrains Mono', monospace";
 
-    const gap = innerWidth < 700 ? 130 : 96;
-    const n = Math.ceil(innerWidth / gap);
+    // texto so nas duas faixas laterais: o miolo fica livre pro grafo da esfera
+    const gap = 92;
+    const band = Math.min(innerWidth * 0.22, 230);   // largura de cada faixa
     cols = [];
-    for (let i = 0; i < n; i++) {
-      const x = i * gap + gap * 0.5;
-      // colunas do miolo entram mais apagadas: ali fica o texto
-      const off = Math.abs(x / innerWidth - 0.5) * 2;   // 0 no centro, 1 nas bordas
-      cols.push({
-        x,
-        y: Math.random() * -innerHeight,
-        speed: 22 + Math.random() * 26,
-        fade: 0.4 + off * 0.6,
-        words: Array.from({ length: TRAIL },
-          () => WORDS[(Math.random() * WORDS.length) | 0])
-      });
+
+    for (let i = 0; i * gap < band; i++) {
+      const dx = i * gap + gap * 0.5;
+      // a coluna mais interna de cada faixa entra mais apagada, pra transicao suave
+      const fade = 1 - (dx / band) * 0.55;
+      for (const x of [dx, innerWidth - dx]) {
+        cols.push({
+          x,
+          y: Math.random() * -innerHeight,
+          speed: 22 + Math.random() * 26,
+          fade,
+          words: Array.from({ length: TRAIL },
+            () => WORDS[(Math.random() * WORDS.length) | 0])
+        });
+      }
     }
   }
 
@@ -372,9 +376,9 @@ frame();
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
 
-    // rastro: em vez de limpar, escurece o quadro anterior
-    ctx.fillStyle = 'rgba(0,0,0,.085)';
-    ctx.fillRect(0, 0, innerWidth, innerHeight);
+    // limpa de verdade: pintar preto por cima acumularia e esconderia a esfera.
+    // o rastro vem do alpha decrescente de cada termo, logo abaixo.
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
 
     for (const c of cols) {
       c.y += c.speed * dt;
