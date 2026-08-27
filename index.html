@@ -199,9 +199,43 @@
     font-size: .58rem;
     letter-spacing: .12em;
     color: var(--dim);
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    align-items: center;
   }
   .hud b { color: var(--fg); font-weight: 400; }
   .hud .sep { opacity: .35; margin: 0 .45rem; }
+  .hud .title { letter-spacing: .22em; opacity: .8; }
+
+  /* barra de integridade do sistema defendido */
+  .integrity {
+    font-size: .6rem;
+    letter-spacing: .05em;
+    color: var(--fg);
+  }
+  .integrity .bar { letter-spacing: -.05em; }
+  .integrity.hurt { animation: hurt .6s ease-out; }
+  @keyframes hurt {
+    0%, 100% { opacity: 1; }
+    25%      { opacity: .25; }
+  }
+
+  /* perimetro: a moldura da tela e a fronteira que voce defende.
+     quando um ataque vaza, ela e rompida visivelmente. */
+  .perimeter {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    border: 0 solid #fff;
+  }
+  .perimeter.breach { animation: breach .55s ease-out; }
+  @keyframes breach {
+    0%   { border-width: 0; }
+    10%  { border-width: 4px; }
+    100% { border-width: 0; }
+  }
 
   /* laterais so em tela larga: no celular nao sobra margem */
   @media (max-width: 900px) {
@@ -223,12 +257,13 @@
 
 <div class="lane left"  id="lane-l"></div>
 <div class="lane right" id="lane-r"></div>
+<div class="perimeter" id="perimeter"></div>
 
 <main>
   <header>
     <h1>Alan Veras</h1>
     <p class="role">Infrastructure &amp; Security Engineer</p>
-    <p class="stack">DevSecOps · Cloud · Kubernetes · Linux</p>
+    <p class="stack">Segurança defensiva · DevSecOps · Cloud · Kubernetes</p>
   </header>
 
   <nav>
@@ -259,7 +294,8 @@
 
   <footer>
     <div class="hud" id="hud">
-      IDS &mdash; clique nos payloads maliciosos que descem nas laterais
+      <div class="title">DEFESA DE PER&Iacute;METRO</div>
+      <div id="hud-body">este n&uacute;cleo est&aacute; sob ataque &mdash; bloqueie os payloads maliciosos nas laterais</div>
     </div>
     <div>Fortaleza &middot; Brasil</div>
   </footer>
@@ -357,6 +393,10 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
+// o nucleo sente o impacto: ataque que atravessa o perimetro sacode a cena
+let shock = 0;
+addEventListener('core:breach', () => { shock = 1; });
+
 const clock = new THREE.Clock();
 
 function frame() {
@@ -376,8 +416,21 @@ function frame() {
 
   current.x += (target.x - current.x) * 0.045;
   current.y += (target.y - current.y) * 0.045;
-  camera.position.x = current.x * 4;
-  camera.position.y = -current.y * 4;
+
+  // tremor decrescente sobreposto ao parallax, so quando houve incidente
+  let jx = 0, jy = 0;
+  if (shock > 0.001) {
+    shock = Math.max(0, shock - dt * 2.2);
+    const a = shock * shock * 0.9;
+    jx = (Math.random() - 0.5) * a;
+    jy = (Math.random() - 0.5) * a;
+    graph.scale.setScalar(1 + shock * 0.045);
+  } else if (graph.scale.x !== 1) {
+    graph.scale.setScalar(1);
+  }
+
+  camera.position.x = current.x * 4 + jx;
+  camera.position.y = -current.y * 4 + jy;
   camera.lookAt(0, 0, 0);
 
   renderer.render(scene, camera);
@@ -386,12 +439,15 @@ frame();
 </script>
 
 <script>
-/* mini-IDS: trafego desce pelas laterais, voce inspeciona e bloqueia o que e ataque.
-   errar num pacote legitimo conta falso positivo, deixar ataque passar conta breach. */
+/* Defesa de perimetro: o grafo 3D no centro e o sistema protegido, as laterais sao a
+   fronteira. Trafego desce misturando requisicoes legitimas e payloads de ataque; cabe
+   a voce inspecionar e conter. Ataque que atravessa degrada a integridade do nucleo,
+   e bloquear trafego legitimo tambem custa: falso positivo derruba servico bom. */
 (function () {
   const lanes = [document.getElementById('lane-l'), document.getElementById('lane-r')];
-  const hud = document.getElementById('hud');
-  if (!lanes[0] || !hud) return;
+  const hudBody = document.getElementById('hud-body');
+  const perimeter = document.getElementById('perimeter');
+  if (!lanes[0] || !hudBody) return;
   if (matchMedia('(max-width: 900px)').matches) return;
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -403,14 +459,34 @@ frame();
                   'admin:admin', 'nc -e /bin/sh'];
 
   const live = [];
-  let blocked = 0, missed = 0, falsePos = 0, started = false;
+  let contained = 0, breaches = 0, falsePos = 0;
+  let integrity = 100, started = false;
+
+  const BAR = 14;
 
   function draw() {
     if (!started) return;
-    hud.innerHTML =
-      '<b>' + blocked + '</b> bloqueados' +
-      '<span class="sep">|</span><b>' + missed + '</b> vazaram' +
+    const filled = Math.round(integrity / 100 * BAR);
+    const bar = '█'.repeat(filled) + '░'.repeat(BAR - filled);
+    hudBody.innerHTML =
+      '<span class="integrity" id="integrity">INTEGRIDADE <span class="bar">' + bar +
+      '</span> ' + Math.round(integrity) + '%</span><br>' +
+      '<b>' + contained + '</b> contidos' +
+      '<span class="sep">|</span><b>' + breaches + '</b> incidentes' +
       '<span class="sep">|</span><b>' + falsePos + '</b> falso-positivo';
+  }
+
+  function damage(amount, isBreach) {
+    integrity = Math.max(0, integrity - amount);
+    if (isBreach) {
+      perimeter.classList.remove('breach');
+      void perimeter.offsetWidth;              // reinicia a animacao
+      perimeter.classList.add('breach');
+      dispatchEvent(new CustomEvent('core:breach'));
+    }
+    draw();
+    const el = document.getElementById('integrity');
+    if (el) { el.classList.remove('hurt'); void el.offsetWidth; el.classList.add('hurt'); }
   }
 
   function spawn() {
@@ -432,9 +508,15 @@ frame();
       p.done = true;
       started = true;
       el.style.setProperty('--y', p.y + 'px');
-      if (p.evil) { blocked++; el.classList.add('hit'); }
-      else        { falsePos++; el.classList.add('miss'); }
-      draw();
+      if (p.evil) {
+        contained++;
+        el.classList.add('hit');
+        draw();
+      } else {
+        falsePos++;                            // derrubar trafego bom tambem e falha
+        el.classList.add('miss');
+        damage(3, false);
+      }
       setTimeout(function () { el.remove(); }, 340);
     });
   }
@@ -445,6 +527,12 @@ frame();
     requestAnimationFrame(tick);
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
+
+    // o sistema se recupera sozinho, devagar, enquanto nada atravessa
+    if (started && integrity < 100) {
+      integrity = Math.min(100, integrity + dt * 0.9);
+      draw();
+    }
 
     acc += dt;
     if (acc > 1.5) { acc = 0; if (live.length < 14) spawn(); }
@@ -459,11 +547,10 @@ frame();
       p.y += p.speed * dt;
       p.el.style.transform = 'translate(-50%, ' + p.y + 'px)';
 
-      if (p.y > limit) {                 // chegou no fim da lane
-        if (p.evil && started) missed++; // ataque que passou so conta depois do 1o clique
+      if (p.y > limit) {                       // atravessou o perimetro
+        if (p.evil && started) { breaches++; damage(8, true); }
         p.el.remove();
         live.splice(i, 1);
-        draw();
       }
     }
   }
