@@ -37,18 +37,26 @@
     z-index: 0;
   }
 
+  /* chuva de termos caindo atras de tudo, junto com a esfera */
+  #rain {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
   /* vinheta pra dar profundidade e nao competir com o texto */
   .vignette {
     position: fixed;
     inset: 0;
-    z-index: 1;
+    z-index: 2;
     pointer-events: none;
     background: radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,.82) 78%);
   }
 
   main {
     position: relative;
-    z-index: 2;
+    z-index: 3;
     min-height: 100%;
     display: flex;
     flex-direction: column;
@@ -140,130 +148,24 @@
     opacity: .5;
     letter-spacing: .12em;
     text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-  }
-
-  /* ---- mini-IDS das laterais ---- */
-
-  .lane {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    width: 132px;
-    z-index: 2;
-    pointer-events: none;   /* so os pacotes capturam clique */
-    overflow: hidden;
-  }
-  .lane.left  { left: 0; }
-  .lane.right { right: 0; }
-
-  .packet {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    pointer-events: auto;
-    cursor: crosshair;
-    padding: .3rem .5rem;
-    border: 1px solid var(--line);
-    background: rgba(0,0,0,.55);
-    color: var(--dim);
-    font-size: .58rem;
-    letter-spacing: .04em;
-    white-space: nowrap;
-    opacity: .5;
-    transition: opacity .2s ease, border-color .2s ease, color .2s ease;
-    will-change: transform;
-  }
-  .packet:hover {
-    opacity: 1;
-    border-color: var(--fg);
-    color: var(--fg);
-  }
-
-  /* dois desfechos possiveis, cada um com sua marca */
-  .packet.hit  { animation: hit  .32s ease-out forwards; }
-  .packet.miss { animation: miss .32s ease-out forwards; }
-
-  @keyframes hit {
-    0%   { opacity: 1; border-color: #fff; color: #fff; background: #fff; }
-    100% { opacity: 0; transform: translate(-50%, var(--y)) scale(1.35); }
-  }
-  @keyframes miss {
-    0%   { opacity: 1; border-color: #fff; color: #fff; }
-    100% { opacity: 0; transform: translate(-50%, var(--y)) scale(.7); }
-  }
-
-  .hud {
-    font-size: .58rem;
-    letter-spacing: .12em;
-    color: var(--dim);
-    display: flex;
-    flex-direction: column;
-    gap: .35rem;
-    align-items: center;
-  }
-  .hud b { color: var(--fg); font-weight: 400; }
-  .hud .sep { opacity: .35; margin: 0 .45rem; }
-  .hud .title { letter-spacing: .22em; opacity: .8; }
-
-  /* barra de integridade do sistema defendido */
-  .integrity {
-    font-size: .6rem;
-    letter-spacing: .05em;
-    color: var(--fg);
-  }
-  .integrity .bar { letter-spacing: -.05em; }
-  .integrity.hurt { animation: hurt .6s ease-out; }
-  @keyframes hurt {
-    0%, 100% { opacity: 1; }
-    25%      { opacity: .25; }
-  }
-
-  /* perimetro: a moldura da tela e a fronteira que voce defende.
-     quando um ataque vaza, ela e rompida visivelmente. */
-  .perimeter {
-    position: fixed;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    border: 0 solid #fff;
-  }
-  .perimeter.breach { animation: breach .55s ease-out; }
-  @keyframes breach {
-    0%   { border-width: 0; }
-    10%  { border-width: 4px; }
-    100% { border-width: 0; }
-  }
-
-  /* laterais so em tela larga: no celular nao sobra margem */
-  @media (max-width: 900px) {
-    .lane { display: none; }
-    .hud  { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     a.link, a.link .arrow { transition: none; }
-    .lane { display: none; }
-    .hud  { display: none; }
   }
 </style>
 </head>
 <body>
 
 <div id="scene"></div>
+<canvas id="rain"></canvas>
 <div class="vignette"></div>
-
-<div class="lane left"  id="lane-l"></div>
-<div class="lane right" id="lane-r"></div>
-<div class="perimeter" id="perimeter"></div>
 
 <main>
   <header>
     <h1>Alan Veras</h1>
     <p class="role">Infrastructure &amp; Security Engineer</p>
-    <p class="stack">Segurança defensiva · DevSecOps · Cloud · Kubernetes</p>
+    <p class="stack">DevSecOps · Cloud · Kubernetes · Linux</p>
   </header>
 
   <nav>
@@ -292,13 +194,7 @@
     </a>
   </nav>
 
-  <footer>
-    <div class="hud" id="hud">
-      <div class="title">DEFESA DE PER&Iacute;METRO</div>
-      <div id="hud-body">este n&uacute;cleo est&aacute; sob ataque &mdash; bloqueie os payloads maliciosos nas laterais</div>
-    </div>
-    <div>Fortaleza &middot; Brasil</div>
-  </footer>
+  <footer>Fortaleza &middot; Brasil</footer>
 </main>
 
 <script type="importmap">
@@ -393,10 +289,6 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
-// o nucleo sente o impacto: ataque que atravessa o perimetro sacode a cena
-let shock = 0;
-addEventListener('core:breach', () => { shock = 1; });
-
 const clock = new THREE.Clock();
 
 function frame() {
@@ -417,20 +309,8 @@ function frame() {
   current.x += (target.x - current.x) * 0.045;
   current.y += (target.y - current.y) * 0.045;
 
-  // tremor decrescente sobreposto ao parallax, so quando houve incidente
-  let jx = 0, jy = 0;
-  if (shock > 0.001) {
-    shock = Math.max(0, shock - dt * 2.2);
-    const a = shock * shock * 0.9;
-    jx = (Math.random() - 0.5) * a;
-    jy = (Math.random() - 0.5) * a;
-    graph.scale.setScalar(1 + shock * 0.045);
-  } else if (graph.scale.x !== 1) {
-    graph.scale.setScalar(1);
-  }
-
-  camera.position.x = current.x * 4 + jx;
-  camera.position.y = -current.y * 4 + jy;
+  camera.position.x = current.x * 4;
+  camera.position.y = -current.y * 4;
   camera.lookAt(0, 0, 0);
 
   renderer.render(scene, camera);
@@ -439,121 +319,87 @@ frame();
 </script>
 
 <script>
-/* Defesa de perimetro: o grafo 3D no centro e o sistema protegido, as laterais sao a
-   fronteira. Trafego desce misturando requisicoes legitimas e payloads de ataque; cabe
-   a voce inspecionar e conter. Ataque que atravessa degrada a integridade do nucleo,
-   e bloquear trafego legitimo tambem custa: falso positivo derruba servico bom. */
+/* chuva de termos: colunas de texto descendo pelo fundo, mais apagadas no centro
+   pra nao brigar com o nome e os links. */
 (function () {
-  const lanes = [document.getElementById('lane-l'), document.getElementById('lane-r')];
-  const hudBody = document.getElementById('hud-body');
-  const perimeter = document.getElementById('perimeter');
-  if (!lanes[0] || !hudBody) return;
-  if (matchMedia('(max-width: 900px)').matches) return;
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = document.getElementById('rain');
+  if (!cv || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const CLEAN = ['GET /index', '200 OK', 'SYN ACK', 'TLS 1.3', 'DNS A?', 'POST /api',
-                 'ICMP echo', '304 CACHED', 'HEAD /', 'ssh keepalive'];
+  const ctx = cv.getContext('2d');
 
-  const ATTACK = ["' OR 1=1--", '../../etc/passwd', '<script>alert', '; rm -rf /',
-                  'UNION SELECT', '${jndi:ldap://', '|| curl evil.sh', '%00%2e%2e%2f',
-                  'admin:admin', 'nc -e /bin/sh'];
+  const WORDS = ['TLS 1.3', 'SHA256', 'AES-256', 'kubectl', 'iptables', 'sudo',
+                 'nginx', 'systemd', 'docker', 'terraform', 'ssh-keygen', 'x509',
+                 'HMAC', 'SELinux', 'audit.log', 'firewalld', 'RBAC', 'mTLS',
+                 'vault', 'chmod 600'];
 
-  const live = [];
-  let contained = 0, breaches = 0, falsePos = 0;
-  let integrity = 100, started = false;
+  const FONT = 10;
+  const STEP = 17;          // distancia vertical entre termos de uma coluna
+  const TRAIL = 11;         // quantos termos formam o rastro
 
-  const BAR = 14;
+  let cols = [], dpr = 1;
 
-  function draw() {
-    if (!started) return;
-    const filled = Math.round(integrity / 100 * BAR);
-    const bar = '█'.repeat(filled) + '░'.repeat(BAR - filled);
-    hudBody.innerHTML =
-      '<span class="integrity" id="integrity">INTEGRIDADE <span class="bar">' + bar +
-      '</span> ' + Math.round(integrity) + '%</span><br>' +
-      '<b>' + contained + '</b> contidos' +
-      '<span class="sep">|</span><b>' + breaches + '</b> incidentes' +
-      '<span class="sep">|</span><b>' + falsePos + '</b> falso-positivo';
-  }
+  function build() {
+    dpr = Math.min(devicePixelRatio, 2);
+    cv.width = innerWidth * dpr;
+    cv.height = innerHeight * dpr;
+    cv.style.width = innerWidth + 'px';
+    cv.style.height = innerHeight + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.font = FONT + "px 'JetBrains Mono', monospace";
 
-  function damage(amount, isBreach) {
-    integrity = Math.max(0, integrity - amount);
-    if (isBreach) {
-      perimeter.classList.remove('breach');
-      void perimeter.offsetWidth;              // reinicia a animacao
-      perimeter.classList.add('breach');
-      dispatchEvent(new CustomEvent('core:breach'));
+    const gap = innerWidth < 700 ? 130 : 96;
+    const n = Math.ceil(innerWidth / gap);
+    cols = [];
+    for (let i = 0; i < n; i++) {
+      const x = i * gap + gap * 0.5;
+      // colunas do miolo entram mais apagadas: ali fica o texto
+      const off = Math.abs(x / innerWidth - 0.5) * 2;   // 0 no centro, 1 nas bordas
+      cols.push({
+        x,
+        y: Math.random() * -innerHeight,
+        speed: 22 + Math.random() * 26,
+        fade: 0.4 + off * 0.6,
+        words: Array.from({ length: TRAIL },
+          () => WORDS[(Math.random() * WORDS.length) | 0])
+      });
     }
-    draw();
-    const el = document.getElementById('integrity');
-    if (el) { el.classList.remove('hurt'); void el.offsetWidth; el.classList.add('hurt'); }
   }
 
-  function spawn() {
-    const lane = lanes[(Math.random() * 2) | 0];
-    const evil = Math.random() < 0.42;
-    const pool = evil ? ATTACK : CLEAN;
-
-    const el = document.createElement('div');
-    el.className = 'packet';
-    el.textContent = pool[(Math.random() * pool.length) | 0];
-    el.style.transform = 'translate(-50%, -40px)';
-    lane.appendChild(el);
-
-    const p = { el, evil, y: -40, speed: 26 + Math.random() * 14, done: false };
-    live.push(p);
-
-    el.addEventListener('click', function () {
-      if (p.done) return;
-      p.done = true;
-      started = true;
-      el.style.setProperty('--y', p.y + 'px');
-      if (p.evil) {
-        contained++;
-        el.classList.add('hit');
-        draw();
-      } else {
-        falsePos++;                            // derrubar trafego bom tambem e falha
-        el.classList.add('miss');
-        damage(3, false);
-      }
-      setTimeout(function () { el.remove(); }, 340);
-    });
-  }
-
-  let last = performance.now(), acc = 0;
+  let last = performance.now();
 
   function tick(now) {
     requestAnimationFrame(tick);
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
 
-    // o sistema se recupera sozinho, devagar, enquanto nada atravessa
-    if (started && integrity < 100) {
-      integrity = Math.min(100, integrity + dt * 0.9);
-      draw();
-    }
+    // rastro: em vez de limpar, escurece o quadro anterior
+    ctx.fillStyle = 'rgba(0,0,0,.085)';
+    ctx.fillRect(0, 0, innerWidth, innerHeight);
 
-    acc += dt;
-    if (acc > 1.5) { acc = 0; if (live.length < 14) spawn(); }
+    for (const c of cols) {
+      c.y += c.speed * dt;
 
-    const limit = innerHeight + 40;
-    for (let i = live.length - 1; i >= 0; i--) {
-      const p = live[i];
-      if (p.done) {
-        if (!p.el.isConnected) live.splice(i, 1);
-        continue;
+      for (let k = 0; k < TRAIL; k++) {
+        const y = c.y - k * STEP;
+        if (y < 0 || y > innerHeight) continue;
+        // ponta de baixo acesa, cauda sumindo pra cima
+        const alpha = (1 - k / TRAIL) * 0.42 * c.fade;
+        ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')';
+        ctx.fillText(c.words[k], c.x, y);
       }
-      p.y += p.speed * dt;
-      p.el.style.transform = 'translate(-50%, ' + p.y + 'px)';
 
-      if (p.y > limit) {                       // atravessou o perimetro
-        if (p.evil && started) { breaches++; damage(8, true); }
-        p.el.remove();
-        live.splice(i, 1);
+      if (c.y - TRAIL * STEP > innerHeight) {   // saiu inteira pela base
+        c.y = Math.random() * -160;
+        c.speed = 22 + Math.random() * 26;
+        for (let k = 0; k < TRAIL; k++) {
+          c.words[k] = WORDS[(Math.random() * WORDS.length) | 0];
+        }
       }
     }
   }
+
+  addEventListener('resize', build);
+  build();
   requestAnimationFrame(tick);
 })();
 </script>
