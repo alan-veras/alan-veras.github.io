@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alan Veras</title>
+<meta name="description" content="Infrastructure &amp; Security Engineer. DevSecOps, Cloud, Kubernetes.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9679;</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #000;
+    --fg: #fff;
+    --dim: #888;
+    --line: rgba(255,255,255,.14);
+    --hover: rgba(255,255,255,.06);
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  #scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  /* vinheta pra dar profundidade e nao competir com o texto */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,.82) 78%);
+  }
+
+  main {
+    position: relative;
+    z-index: 2;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem 1.5rem;
+    gap: 2.5rem;
+  }
+
+  header { text-align: center; }
+
+  h1 {
+    font-size: clamp(1.9rem, 6vw, 3rem);
+    font-weight: 400;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .role {
+    margin-top: .9rem;
+    font-size: clamp(.7rem, 2.4vw, .8rem);
+    color: var(--dim);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+  }
+
+  .stack {
+    margin-top: .55rem;
+    font-size: clamp(.62rem, 2.1vw, .7rem);
+    color: var(--dim);
+    opacity: .65;
+    letter-spacing: .1em;
+  }
+
+  nav {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    width: 100%;
+    max-width: 26rem;
+  }
+
+  a.link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: .95rem 1.15rem;
+    border: 1px solid var(--line);
+    color: var(--fg);
+    text-decoration: none;
+    font-size: .82rem;
+    letter-spacing: .08em;
+    background: rgba(0,0,0,.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background .22s ease, border-color .22s ease, transform .22s ease;
+  }
+
+  a.link:hover,
+  a.link:focus-visible {
+    background: var(--hover);
+    border-color: var(--fg);
+    transform: translateX(4px);
+    outline: none;
+  }
+
+  a.link svg {
+    width: 17px;
+    height: 17px;
+    flex: none;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  a.link .arrow {
+    margin-left: auto;
+    color: var(--dim);
+    transition: transform .22s ease, color .22s ease;
+  }
+
+  a.link:hover .arrow { transform: translateX(3px); color: var(--fg); }
+
+  footer {
+    font-size: .62rem;
+    color: var(--dim);
+    opacity: .5;
+    letter-spacing: .12em;
+    text-align: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a.link, a.link .arrow { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="scene"></div>
+<div class="vignette"></div>
+
+<main>
+  <header>
+    <h1>Alan Veras</h1>
+    <p class="role">Infrastructure &amp; Security Engineer</p>
+    <p class="stack">DevSecOps · Cloud · Kubernetes · Linux</p>
+  </header>
+
+  <nav>
+    <a class="link" href="https://github.com/alan-veras" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 0 0-.9-2.6c3-.3 6.2-1.5 6.2-6.7A5.2 5.2 0 0 0 19.9 5a4.9 4.9 0 0 0-.1-3.6s-1.1-.4-3.7 1.4a12.7 12.7 0 0 0-6.6 0C6.9 1 5.8 1.4 5.8 1.4A4.9 4.9 0 0 0 5.7 5a5.2 5.2 0 0 0-1.4 3.6c0 5.2 3.2 6.4 6.2 6.7a3.4 3.4 0 0 0-.9 2.6V22"/></svg>
+      <span>GitHub</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+
+    <a class="link" href="https://www.linkedin.com/in/alan-veras/" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+      <span>LinkedIn</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+
+    <a class="link" href="mailto:v0r1cth5@gmail.com">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+      <span>E-mail</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+
+    <a class="link" href="https://github.com/alan-veras/devsecops-pipeline" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>DevSecOps Pipeline</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+  </nav>
+
+  <footer>Fortaleza &middot; Brasil</footer>
+</main>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+const host = document.getElementById('scene');
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.1, 100);
+camera.position.z = 15;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+host.appendChild(renderer.domElement);
+
+// grafo de nos distribuidos numa esfera: cada no vira um ponto,
+// e pares proximos viram aresta. le como topologia de rede.
+const NODES = 150;
+const RADIUS = 7.2;
+const LINK_DIST = 3.1;
+
+const points = [];
+for (let i = 0; i < NODES; i++) {
+  // distribuicao de fibonacci pra espalhar sem aglomerar nos polos
+  const y = 1 - (i / (NODES - 1)) * 2;
+  const r = Math.sqrt(1 - y * y);
+  const theta = i * Math.PI * (3 - Math.sqrt(5));
+  points.push(new THREE.Vector3(
+    Math.cos(theta) * r * RADIUS,
+    y * RADIUS,
+    Math.sin(theta) * r * RADIUS
+  ));
+}
+
+const graph = new THREE.Group();
+scene.add(graph);
+
+// nos
+const nodeGeo = new THREE.BufferGeometry().setFromPoints(points);
+graph.add(new THREE.Points(nodeGeo, new THREE.PointsMaterial({
+  color: 0xffffff, size: 0.075, transparent: true, opacity: 0.85,
+  sizeAttenuation: true
+})));
+
+// arestas: calculadas uma unica vez, depois so o grupo inteiro gira
+const edges = [];
+for (let i = 0; i < NODES; i++) {
+  for (let j = i + 1; j < NODES; j++) {
+    if (points[i].distanceTo(points[j]) < LINK_DIST) edges.push(points[i], points[j]);
+  }
+}
+const edgeGeo = new THREE.BufferGeometry().setFromPoints(edges);
+graph.add(new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({
+  color: 0xffffff, transparent: true, opacity: 0.14
+})));
+
+// pulso: um no aceso que salta pra outro no, tipo pacote atravessando a rede
+const pulseGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3()]);
+const pulse = new THREE.Points(pulseGeo, new THREE.PointsMaterial({
+  color: 0xffffff, size: 0.3, transparent: true, opacity: 1, sizeAttenuation: true
+}));
+graph.add(pulse);
+
+let hopFrom = points[0], hopTo = points[1], hopT = 0;
+function nextHop() {
+  hopFrom = hopTo;
+  const near = points.filter(p => p !== hopFrom && p.distanceTo(hopFrom) < LINK_DIST);
+  hopTo = near.length ? near[(Math.random() * near.length) | 0]
+                      : points[(Math.random() * NODES) | 0];
+  hopT = 0;
+}
+
+// parallax: a cena inclina de leve seguindo o cursor / o dedo
+const target = { x: 0, y: 0 };
+const current = { x: 0, y: 0 };
+
+function aim(cx, cy) {
+  target.x = (cx / innerWidth - 0.5) * 0.6;
+  target.y = (cy / innerHeight - 0.5) * 0.6;
+}
+addEventListener('pointermove', e => aim(e.clientX, e.clientY), { passive: true });
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+const clock = new THREE.Clock();
+
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  if (!reduced) {
+    graph.rotation.y += dt * 0.09;
+    graph.rotation.x += dt * 0.025;
+
+    hopT += dt * 1.6;
+    if (hopT >= 1) nextHop();
+    pulse.geometry.attributes.position.setXYZ(0,
+      ...hopFrom.clone().lerp(hopTo, hopT).toArray());
+    pulse.geometry.attributes.position.needsUpdate = true;
+  }
+
+  current.x += (target.x - current.x) * 0.045;
+  current.y += (target.y - current.y) * 0.045;
+  camera.position.x = current.x * 4;
+  camera.position.y = -current.y * 4;
+  camera.lookAt(0, 0, 0);
+
+  renderer.render(scene, camera);
+}
+frame();
+</script>
+
+</body>
+</html>
