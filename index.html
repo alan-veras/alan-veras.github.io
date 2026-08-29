@@ -41,7 +41,7 @@
   #rain {
     position: fixed;
     inset: 0;
-    z-index: 1;
+    z-index: 2;
     pointer-events: none;
   }
 
@@ -49,7 +49,7 @@
   .vignette {
     position: fixed;
     inset: 0;
-    z-index: 2;
+    z-index: 1;
     pointer-events: none;
     background: radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,.82) 78%);
   }
@@ -471,7 +471,9 @@ frame();
       for (const x of [dx, innerWidth - dx]) {
         cols.push({
           x,
-          y: Math.random() * -innerHeight,
+          // a faixa da direita escreve pra dentro, senao termos longos vazam pela borda
+          align: x > innerWidth / 2 ? 'right' : 'left',
+          y: Math.random() * (innerHeight + TRAIL * STEP),
           speed: 22 + Math.random() * 26,
           fade,
           words: Array.from({ length: TRAIL },
@@ -501,6 +503,7 @@ frame();
         // ponta de baixo acesa, cauda sumindo pra cima
         const alpha = (1 - k / TRAIL) * 0.42 * c.fade;
         ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')';
+        ctx.textAlign = c.align;
         ctx.fillText(c.words[k], c.x, y);
       }
 
