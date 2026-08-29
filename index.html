@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Alan Veras</title>
-<meta name="description" content="Cloud Security Engineer. DevSecOps, AWS, Kubernetes, CI/CD.">
+<meta name="description" content="Engenheiro de Infraestrutura e Cloud. Linux, Docker, AWS, CI/CD, com RAG e agentes LLM em producao.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9679;</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -190,16 +190,16 @@
 <main>
   <header>
     <h1>Alan Veras</h1>
-    <p class="role">Cloud Security Engineer</p>
-    <p class="stack">DevSecOps · AWS · Kubernetes · CI/CD</p>
+    <p class="role">Infrastructure &amp; Cloud Engineer</p>
+    <p class="stack">Linux · Docker · AWS · CI/CD · Python</p>
   </header>
 
   <nav>
-    <a class="link hero" href="https://github.com/alan-veras/devsecops-pipeline" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <a class="link hero" href="https://github.com/alan-veras/llm-conductor" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="12" r="2"/><path d="M7 6h5a3 3 0 0 1 3 3v1M7 18h5a3 3 0 0 0 3-3v-1"/></svg>
       <span class="hero-text">
-        <span>DevSecOps Pipeline</span>
-        <small>app vulner&aacute;vel de prop&oacute;sito, com pipeline que barra cada ataque antes de produ&ccedil;&atilde;o</small>
+        <span>llm-conductor</span>
+        <small>pipeline multi-est&aacute;gio determin&iacute;stico dirigido por LLM, com gates JSON e est&aacute;gios idempotentes e retom&aacute;veis</small>
       </span>
       <span class="arrow">&rarr;</span>
     </a>
@@ -439,10 +439,10 @@ frame();
 
   const ctx = cv.getContext('2d');
 
-  const WORDS = ['TLS 1.3', 'SHA256', 'AES-256', 'kubectl', 'iptables', 'sudo',
-                 'nginx', 'systemd', 'docker', 'terraform', 'ssh-keygen', 'x509',
-                 'HMAC', 'SELinux', 'audit.log', 'firewalld', 'RBAC', 'mTLS',
-                 'vault', 'chmod 600'];
+  const WORDS = ['kubectl', 'terraform', 'docker', 'systemd', 'nginx', 'journalctl',
+                 'ansible', 'helm', 'EC2', 'ECR', 'S3', 'Cloudflare',
+                 'GitHub Actions', 'ARQ/Redis', 'Postgres', 'uptime',
+                 'p95 latency', 'quality gate', 'Recall@5', 'LangGraph'];
 
   const FONT = 10;
   const STEP = 17;          // distancia vertical entre termos de uma coluna
